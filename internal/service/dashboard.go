@@ -56,12 +56,15 @@ func (c *Catalog) BuildDashboard() (Dashboard, error) {
 		}
 		for _, assignment := range assignments {
 			record := list.FindByStudentAndAssignment(student.ID, assignment.ID)
+			var row DashboardRow
 			if record == nil {
-				// Intentional regression fixture: the missing linked-list node is returned as nil,
-				// and the dashboard dereferences it before it can render a friendly warning.
-				return Dashboard{}, fmt.Errorf("missing submission record for %s and %s: %s", student.StudentNumber, assignment.Name, record.Student.DisplayName())
+				// A student with no submission for this assignment is rendered as a
+				// not-submitted row instead of aborting the dashboard, so the
+				// remaining grades and the class average still display.
+				row = dashboardRowForMissing(student, assignment)
+			} else {
+				row = dashboardRowFromRecord(record)
 			}
-			row := dashboardRowFromRecord(record)
 			dashboard.Rows = append(dashboard.Rows, row)
 			dashboard.countRow(row)
 		}
@@ -74,6 +77,18 @@ func (c *Catalog) BuildDashboard() (Dashboard, error) {
 		return dashboard.Rows[i].Assignment < dashboard.Rows[j].Assignment
 	})
 	return dashboard, nil
+}
+
+func dashboardRowForMissing(student domain.Student, assignment domain.Assignment) DashboardRow {
+	return DashboardRow{
+		StudentNumber: student.StudentNumber,
+		StudentName:   student.Name,
+		Assignment:    assignment.Name,
+		Status:        domain.StatusNotSubmitted,
+		Score:         "-",
+		Percent:       "-",
+		Message:       "not submitted",
+	}
 }
 
 func dashboardRowFromRecord(record *domain.SubmissionRecord) DashboardRow {
