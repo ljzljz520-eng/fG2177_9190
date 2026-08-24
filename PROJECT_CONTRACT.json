@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "production_loc": 2875,
+    "production_files": 20,
+    "production_packages": 7,
+    "test_files": 10,
+    "production_functions": 158,
+    "decision_points": 479
+  },
+  "persistence": {
+    "module": "go.etcd.io/bbolt",
+    "entities": [
+      "Student",
+      "Assignment",
+      "Submission",
+      "GradeSnapshot"
+    ],
+    "reopen_test": "TestPersistenceSurvivesReopen"
+  },
+  "workflows": [
+    {
+      "steps": [
+        "validate student and assignment records",
+        "persist catalog entities",
+        "rebuild submission linked list",
+        "close and reopen bbolt database"
+      ],
+      "test": "TestWorkflowStudentIntakeAndRestore"
+    },
+    {
+      "steps": [
+        "confirm student and assignment",
+        "append submission record",
+        "apply scoring policy",
+        "render dashboard result"
+      ],
+      "test": "TestWorkflowSubmissionGradingAndDashboard"
+    },
+    {
+      "steps": [
+        "query submission record",
+        "apply status correction",
+        "persist grade snapshot",
+        "reopen and export result"
+      ],
+      "test": "TestWorkflowStatusCorrectionAndExport"
+    }
+  ]
+}
